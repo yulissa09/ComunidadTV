@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1071237232490",
+    "project_id": "comunidadtv",
+    "storage_bucket": "comunidadtv.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1071237232490:android:323a20435aa817c2ed9713",
+        "android_client_info": {
+          "package_name": "com.example.comunidadtv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAyb1riJcCo4ATiiy_pwcRm6sGpgYiqT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
