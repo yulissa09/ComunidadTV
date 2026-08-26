@@ -1,50 +1,103 @@
 package com.example.comunidadtv
 
 import android.os.Bundle
+import android.widget.Toast
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+import androidx.compose.ui.platform.LocalContext
+
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
 import com.example.comunidadtv.ui.theme.ComunidadTVTheme
+
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
+
+// =========================================================
+// COLORES DEL DISEÑO
+// =========================================================
+
+val RosaPrincipal = Color(0xFFFFA8B8)
+val RosaOscuro = Color(0xFF8F3D50)
+val RosaClaro = Color(0xFFFFF0F3)
+val Fondo = Color(0xFFFFF8FA)
+val Tarjeta = Color(0xFFFFFFFF)
+val TextoPrincipal = Color(0xFF3E3033)
+val TextoSecundario = Color(0xFF725F64)
+
+
+// =========================================================
+// MAIN ACTIVITY
+// =========================================================
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
 
         setContent {
+
             ComunidadTVTheme {
+
                 ComunidadTVApp()
             }
         }
     }
 }
+
+
+// =========================================================
+// NAVEGACIÓN PRINCIPAL
+// =========================================================
 
 @Composable
 fun ComunidadTVApp() {
@@ -56,31 +109,61 @@ fun ComunidadTVApp() {
         startDestination = "inicio"
     ) {
 
-        // Pantalla principal
+        // =================================================
+        // INICIO
+        // =================================================
+
         composable("inicio") {
+
             InicioScreen(
-                onAvisosClick = {
-                    navController.navigate("avisos")
-                },
+
                 onEventosClick = {
+
+                    // Mandamos la orden a la TV
+                    FirebaseDatabase
+                        .getInstance()
+                        .getReference("control_tv")
+                        .child("pantalla")
+                        .setValue("eventos")
+
+                    // Abrimos Eventos en el móvil
                     navController.navigate("eventos")
                 }
             )
         }
 
-        // Pantalla de avisos
-        composable("avisos") {
-            AvisosScreen(
+
+        // =================================================
+        // EVENTOS
+        // =================================================
+
+        composable("eventos") {
+
+            EventosScreen(
+
                 onRegresar = {
+
                     navController.popBackStack()
+                },
+
+                onRegistrarEvento = {
+
+                    navController.navigate("registrarEvento")
                 }
             )
         }
 
-        // Pantalla de eventos
-        composable("eventos") {
-            EventosScreen(
+
+        // =================================================
+        // REGISTRAR EVENTO
+        // =================================================
+
+        composable("registrarEvento") {
+
+            RegistrarEventoScreen(
+
                 onRegresar = {
+
                     navController.popBackStack()
                 }
             )
@@ -89,228 +172,162 @@ fun ComunidadTVApp() {
 }
 
 
-// ----------------------------------------------------
+// =========================================================
 // PANTALLA PRINCIPAL
-// ----------------------------------------------------
+// =========================================================
 
 @Composable
 fun InicioScreen(
-    onAvisosClick: () -> Unit,
     onEventosClick: () -> Unit
 ) {
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Fondo)
     ) {
 
-        Text(
-            text = "ComunidadTV"
-        )
+        Column(
 
-        Text(
-            text = "Información de tu comunidad",
-            modifier = Modifier.padding(16.dp)
-        )
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 28.dp,
+                    vertical = 40.dp
+                ),
 
-        Button(
-            onClick = onAvisosClick
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+
+            verticalArrangement =
+                Arrangement.Center
         ) {
-            Text("📢 Avisos")
-        }
-
-        Button(
-            onClick = onEventosClick,
-            modifier = Modifier.padding(top = 12.dp)
-        ) {
-            Text("📅 Eventos")
-        }
-    }
-}
 
 
-// ----------------------------------------------------
-// PANTALLA DE AVISOS
-// ----------------------------------------------------
+            // =================================================
+            // ENCABEZADO
+            // =================================================
 
-@Composable
-fun AvisosScreen(
-    onRegresar: () -> Unit
-) {
+            Text(
+                text = "📺",
+                fontSize = 55.sp
+            )
 
-    var avisos by remember {
-        mutableStateOf<List<Map<String, String>>>(emptyList())
-    }
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
-    var cargando by remember {
-        mutableStateOf(true)
-    }
+            Text(
+                text = "ComunidadTV",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = RosaOscuro
+            )
 
-    var error by remember {
-        mutableStateOf<String?>(null)
-    }
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
 
-    // Leer avisos desde Firebase
-    LaunchedEffect(Unit) {
+            Text(
+                text = "Información de tu comunidad",
+                fontSize = 17.sp,
+                color = TextoSecundario,
+                textAlign = TextAlign.Center
+            )
 
-        val referencia = FirebaseDatabase
-            .getInstance()
-            .getReference("avisos")
+            Spacer(
+                modifier = Modifier.height(45.dp)
+            )
 
-        referencia.addListenerForSingleValueEvent(
-            object : ValueEventListener {
 
-                override fun onDataChange(snapshot: DataSnapshot) {
+            // =================================================
+            // TARJETA PRINCIPAL
+            // =================================================
 
-                    val lista = mutableListOf<Map<String, String>>()
+            Card(
 
-                    for (avisoSnapshot in snapshot.children) {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 5.dp),
 
-                        val aviso = mapOf(
+                shape = RoundedCornerShape(28.dp),
 
-                            "titulo" to (
-                                    avisoSnapshot
-                                        .child("titulo")
-                                        .getValue(String::class.java)
-                                        ?: ""
-                                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = Tarjeta
+                ),
 
-                            "descripcion" to (
-                                    avisoSnapshot
-                                        .child("descripcion")
-                                        .getValue(String::class.java)
-                                        ?: ""
-                                    ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                )
+            ) {
 
-                            "fecha" to (
-                                    avisoSnapshot
-                                        .child("fecha")
-                                        .getValue(String::class.java)
-                                        ?: ""
-                                    ),
+                Column(
 
-                            "lugar" to (
-                                    avisoSnapshot
-                                        .child("lugar")
-                                        .getValue(String::class.java)
-                                        ?: ""
-                                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(28.dp),
 
-                            "categoria" to (
-                                    avisoSnapshot
-                                        .child("categoria")
-                                        .getValue(String::class.java)
-                                        ?: ""
-                                    )
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text = "📅",
+                        fontSize = 42.sp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(10.dp)
+                    )
+
+                    Text(
+                        text = "Eventos comunitarios",
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPrincipal
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = "Consulta los próximos eventos de tu comunidad.",
+                        fontSize = 14.sp,
+                        color = TextoSecundario,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(22.dp)
+                    )
+
+
+                    // =================================================
+                    // BOTÓN EVENTOS
+                    // =================================================
+
+                    Button(
+
+                        onClick = onEventosClick,
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(58.dp),
+
+                        shape = RoundedCornerShape(18.dp),
+
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RosaPrincipal,
+                            contentColor = TextoPrincipal
                         )
+                    ) {
 
-                        lista.add(aviso)
-                    }
-
-                    avisos = lista
-                    cargando = false
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-
-                    error = databaseError.message
-                    cargando = false
-                }
-            }
-        )
-    }
-
-
-    // Interfaz
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-
-        Text(
-            text = "📢 Avisos"
-        )
-
-        Button(
-            onClick = onRegresar,
-            modifier = Modifier.padding(vertical = 16.dp)
-        ) {
-            Text("Regresar")
-        }
-
-
-        when {
-
-            // Cargando Firebase
-            cargando -> {
-
-                CircularProgressIndicator()
-            }
-
-
-            // Error de Firebase
-            error != null -> {
-
-                Text(
-                    text = "Error: $error"
-                )
-            }
-
-
-            // No existen avisos
-            avisos.isEmpty() -> {
-
-                Text(
-                    text = "No hay avisos registrados."
-                )
-            }
-
-
-            // Mostrar avisos
-            else -> {
-
-                LazyColumn {
-
-                    items(avisos) { aviso ->
-
-                        Card(
-                            modifier = Modifier
-                                .padding(bottom = 16.dp)
-                        ) {
-
-                            Column(
-                                modifier = Modifier.padding(20.dp)
-                            ) {
-
-                                Text(
-                                    text = aviso["titulo"] ?: ""
-                                )
-
-                                Text(
-                                    text = aviso["descripcion"] ?: "",
-                                    modifier = Modifier.padding(
-                                        top = 8.dp,
-                                        bottom = 12.dp
-                                    )
-                                )
-
-                                Text(
-                                    text = "📅 ${aviso["fecha"]}"
-                                )
-
-                                Text(
-                                    text = "📍 ${aviso["lugar"]}"
-                                )
-
-                                Text(
-                                    text = "🏷️ ${aviso["categoria"]}"
-                                )
-                            }
-                        }
+                        Text(
+                            text = "📅  Ver eventos",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -319,26 +336,39 @@ fun AvisosScreen(
 }
 
 
-// ----------------------------------------------------
-// PANTALLA DE EVENTOS
-// ----------------------------------------------------
+// =========================================================
+// EVENTOS
+// =========================================================
 
 @Composable
 fun EventosScreen(
-    onRegresar: () -> Unit
+    onRegresar: () -> Unit,
+    onRegistrarEvento: () -> Unit
 ) {
 
     var eventos by remember {
-        mutableStateOf<List<Map<String, String>>>(emptyList())
+
+        mutableStateOf<List<Map<String, String>>>(
+            emptyList()
+        )
     }
 
+
     var cargando by remember {
+
         mutableStateOf(true)
     }
 
+
     var error by remember {
+
         mutableStateOf<String?>(null)
     }
+
+
+    // =====================================================
+    // LEER EVENTOS DE FIREBASE
+    // =====================================================
 
     LaunchedEffect(Unit) {
 
@@ -346,136 +376,898 @@ fun EventosScreen(
             .getInstance()
             .getReference("eventos")
 
-        referencia.addListenerForSingleValueEvent(
+
+        referencia.addValueEventListener(
+
             object : ValueEventListener {
 
-                override fun onDataChange(snapshot: DataSnapshot) {
+                override fun onDataChange(
+                    snapshot: DataSnapshot
+                ) {
 
-                    val lista = mutableListOf<Map<String, String>>()
+                    val lista =
+                        mutableListOf<Map<String, String>>()
 
-                    for (eventoSnapshot in snapshot.children) {
+
+                    for (
+                    eventoSnapshot in snapshot.children
+                    ) {
 
                         val evento = mapOf(
+
                             "titulo" to (
-                                    eventoSnapshot.child("titulo")
-                                        .getValue(String::class.java) ?: ""
+                                    eventoSnapshot
+                                        .child("titulo")
+                                        .getValue(
+                                            String::class.java
+                                        ) ?: ""
                                     ),
 
                             "descripcion" to (
-                                    eventoSnapshot.child("descripcion")
-                                        .getValue(String::class.java) ?: ""
+                                    eventoSnapshot
+                                        .child("descripcion")
+                                        .getValue(
+                                            String::class.java
+                                        ) ?: ""
                                     ),
 
                             "fecha" to (
-                                    eventoSnapshot.child("fecha")
-                                        .getValue(String::class.java) ?: ""
+                                    eventoSnapshot
+                                        .child("fecha")
+                                        .getValue(
+                                            String::class.java
+                                        ) ?: ""
                                     ),
 
                             "lugar" to (
-                                    eventoSnapshot.child("lugar")
-                                        .getValue(String::class.java) ?: ""
+                                    eventoSnapshot
+                                        .child("lugar")
+                                        .getValue(
+                                            String::class.java
+                                        ) ?: ""
                                     ),
 
                             "categoria" to (
-                                    eventoSnapshot.child("categoria")
-                                        .getValue(String::class.java) ?: ""
+                                    eventoSnapshot
+                                        .child("categoria")
+                                        .getValue(
+                                            String::class.java
+                                        ) ?: ""
                                     )
                         )
 
                         lista.add(evento)
                     }
 
+
                     eventos = lista
+
                     cargando = false
+
+                    error = null
                 }
 
-                override fun onCancelled(databaseError: DatabaseError) {
+
+                override fun onCancelled(
+                    databaseError: DatabaseError
+                ) {
 
                     error = databaseError.message
+
                     cargando = false
                 }
             }
         )
     }
 
-    Column(
+
+    // =====================================================
+    // DISEÑO DE EVENTOS
+    // =====================================================
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .background(Fondo)
     ) {
 
-        Text(
-            text = "📅 Eventos"
-        )
+        Column(
 
-        Button(
-            onClick = onRegresar,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 24.dp,
+                    vertical = 35.dp
+                )
         ) {
-            Text("Regresar")
-        }
 
-        when {
 
-            cargando -> {
+            // =================================================
+            // ENCABEZADO
+            // =================================================
 
-                CircularProgressIndicator()
-            }
-
-            error != null -> {
-
-                Text(
-                    text = "Error: $error"
-                )
-            }
-
-            eventos.isEmpty() -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
                 Text(
-                    text = "No hay eventos registrados."
+                    text = "📅",
+                    fontSize = 34.sp
                 )
+
+                Spacer(
+                    modifier = Modifier.width(10.dp)
+                )
+
+                Column {
+
+                    Text(
+                        text = "Eventos",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = RosaOscuro
+                    )
+
+                    Text(
+                        text = "Actividades de tu comunidad",
+                        fontSize = 14.sp,
+                        color = TextoSecundario
+                    )
+                }
             }
 
-            else -> {
 
-                LazyColumn {
+            Spacer(
+                modifier = Modifier.height(22.dp)
+            )
 
-                    items(eventos) { evento ->
 
-                        Card(
-                            modifier = Modifier.padding(bottom = 16.dp)
+            // =================================================
+            // BOTONES
+            // =================================================
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(12.dp)
+            ) {
+
+
+                Button(
+
+                    onClick = onRegresar,
+
+                    modifier = Modifier
+                        .height(50.dp),
+
+                    shape = RoundedCornerShape(16.dp),
+
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE8DDE0),
+                        contentColor = TextoPrincipal
+                    )
+                ) {
+
+                    Text(
+                        text = "← Regresar",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+
+                Button(
+
+                    onClick = onRegistrarEvento,
+
+                    modifier = Modifier
+                        .height(50.dp),
+
+                    shape = RoundedCornerShape(16.dp),
+
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = RosaPrincipal,
+                        contentColor = TextoPrincipal
+                    )
+                ) {
+
+                    Text(
+                        text = "＋ Registrar evento",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(25.dp)
+            )
+
+
+            // =================================================
+            // CONTENIDO
+            // =================================================
+
+            when {
+
+                cargando -> {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentAlignment =
+                            Alignment.Center
+                    ) {
+
+                        Column(
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally
                         ) {
 
-                            Column(
-                                modifier = Modifier.padding(20.dp)
+                            CircularProgressIndicator(
+                                color = RosaOscuro
+                            )
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(15.dp)
+                            )
+
+                            Text(
+                                text = "Cargando eventos...",
+                                color =
+                                    TextoSecundario
+                            )
+                        }
+                    }
+                }
+
+
+                error != null -> {
+
+                    Text(
+                        text = "Error: $error",
+                        color = Color.Red
+                    )
+                }
+
+
+                eventos.isEmpty() -> {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 50.dp),
+
+                        contentAlignment =
+                            Alignment.Center
+                    ) {
+
+                        Column(
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally
+                        ) {
+
+                            Text(
+                                text = "📭",
+                                fontSize = 50.sp
+                            )
+
+                            Spacer(
+                                modifier =
+                                    Modifier.height(12.dp)
+                            )
+
+                            Text(
+                                text =
+                                    "No hay eventos registrados.",
+                                fontSize = 17.sp,
+                                color =
+                                    TextoSecundario
+                            )
+                        }
+                    }
+                }
+
+
+                else -> {
+
+                    LazyColumn(
+
+                        modifier =
+                            Modifier.fillMaxSize(),
+
+                        verticalArrangement =
+                            Arrangement.spacedBy(18.dp)
+                    ) {
+
+                        items(eventos) { evento ->
+
+
+                            // =============================================
+                            // TARJETA DEL EVENTO
+                            // =============================================
+
+                            Card(
+
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+
+                                shape =
+                                    RoundedCornerShape(24.dp),
+
+                                colors =
+                                    CardDefaults.cardColors(
+                                        containerColor =
+                                            Tarjeta
+                                    ),
+
+                                elevation =
+                                    CardDefaults.cardElevation(
+                                        defaultElevation =
+                                            5.dp
+                                    )
                             ) {
 
-                                Text(
-                                    text = evento["titulo"] ?: ""
-                                )
+                                Column(
 
-                                Text(
-                                    text = evento["descripcion"] ?: "",
-                                    modifier = Modifier.padding(
-                                        top = 8.dp,
-                                        bottom = 12.dp
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp)
+                                ) {
+
+
+                                    // -------------------------------------
+                                    // TÍTULO
+                                    // -------------------------------------
+
+                                    Text(
+                                        text =
+                                            evento["titulo"]
+                                                ?: "",
+
+                                        fontSize =
+                                            22.sp,
+
+                                        fontWeight =
+                                            FontWeight.Bold,
+
+                                        color =
+                                            RosaOscuro
                                     )
-                                )
 
-                                Text(
-                                    text = "📅 ${evento["fecha"]}"
-                                )
 
-                                Text(
-                                    text = "📍 ${evento["lugar"]}"
-                                )
+                                    Spacer(
+                                        modifier =
+                                            Modifier.height(8.dp)
+                                    )
 
-                                Text(
-                                    text = "🏷️ ${evento["categoria"]}"
-                                )
+
+                                    // -------------------------------------
+                                    // DESCRIPCIÓN
+                                    // -------------------------------------
+
+                                    Text(
+                                        text =
+                                            evento["descripcion"]
+                                                ?: "",
+
+                                        fontSize =
+                                            16.sp,
+
+                                        color =
+                                            TextoPrincipal
+                                    )
+
+
+                                    Spacer(
+                                        modifier =
+                                            Modifier.height(16.dp)
+                                    )
+
+
+                                    // -------------------------------------
+                                    // INFORMACIÓN
+                                    // -------------------------------------
+
+                                    Text(
+                                        text =
+                                            "📅  ${evento["fecha"]}",
+
+                                        fontSize =
+                                            15.sp,
+
+                                        color =
+                                            TextoSecundario
+                                    )
+
+                                    Spacer(
+                                        modifier =
+                                            Modifier.height(6.dp)
+                                    )
+
+                                    Text(
+                                        text =
+                                            "📍  ${evento["lugar"]}",
+
+                                        fontSize =
+                                            15.sp,
+
+                                        color =
+                                            TextoSecundario
+                                    )
+
+                                    Spacer(
+                                        modifier =
+                                            Modifier.height(6.dp)
+                                    )
+
+                                    Text(
+                                        text =
+                                            "🏷️  ${evento["categoria"]}",
+
+                                        fontSize =
+                                            15.sp,
+
+                                        color =
+                                            TextoSecundario
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+
+// =========================================================
+// REGISTRAR EVENTO
+// =========================================================
+
+@Composable
+fun RegistrarEventoScreen(
+    onRegresar: () -> Unit
+) {
+
+    val context = LocalContext.current
+
+
+    var titulo by remember {
+        mutableStateOf("")
+    }
+
+
+    var descripcion by remember {
+        mutableStateOf("")
+    }
+
+
+    var fecha by remember {
+        mutableStateOf("")
+    }
+
+
+    var lugar by remember {
+        mutableStateOf("")
+    }
+
+
+    var categoria by remember {
+        mutableStateOf("")
+    }
+
+
+    var guardando by remember {
+        mutableStateOf(false)
+    }
+
+
+    // =====================================================
+    // DISEÑO
+    // =====================================================
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Fondo)
+    ) {
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 24.dp,
+                    vertical = 30.dp
+                )
+        ) {
+
+
+            // =================================================
+            // ENCABEZADO
+            // =================================================
+
+            Row(
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = "📅",
+                    fontSize = 34.sp
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.width(10.dp)
+                )
+
+                Column {
+
+                    Text(
+                        text = "Nuevo evento",
+                        fontSize = 28.sp,
+                        fontWeight =
+                            FontWeight.Bold,
+                        color = RosaOscuro
+                    )
+
+                    Text(
+                        text =
+                            "Registra una actividad comunitaria",
+                        fontSize = 14.sp,
+                        color =
+                            TextoSecundario
+                    )
+                }
+            }
+
+
+            Spacer(
+                modifier =
+                    Modifier.height(20.dp)
+            )
+
+
+            // =================================================
+            // BOTÓN REGRESAR
+            // =================================================
+
+            Button(
+
+                onClick = onRegresar,
+
+                modifier =
+                    Modifier.height(48.dp),
+
+                shape =
+                    RoundedCornerShape(15.dp),
+
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor =
+                            Color(0xFFE8DDE0),
+                        contentColor =
+                            TextoPrincipal
+                    )
+            ) {
+
+                Text(
+                    text = "← Regresar",
+                    fontWeight =
+                        FontWeight.Bold
+                )
+            }
+
+
+            Spacer(
+                modifier =
+                    Modifier.height(22.dp)
+            )
+
+
+            // =================================================
+            // FORMULARIO
+            // =================================================
+
+            LazyColumn(
+
+                modifier =
+                    Modifier.fillMaxSize(),
+
+                verticalArrangement =
+                    Arrangement.spacedBy(12.dp)
+            ) {
+
+
+                item {
+
+                    OutlinedTextField(
+
+                        value = titulo,
+
+                        onValueChange = {
+                            titulo = it
+                        },
+
+                        label = {
+                            Text("Título del evento")
+                        },
+
+                        placeholder = {
+                            Text(
+                                "Ejemplo: Feria de la comunidad"
+                            )
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(16.dp),
+
+                        singleLine = true
+                    )
+                }
+
+
+                item {
+
+                    OutlinedTextField(
+
+                        value = descripcion,
+
+                        onValueChange = {
+                            descripcion = it
+                        },
+
+                        label = {
+                            Text("Descripción")
+                        },
+
+                        placeholder = {
+                            Text(
+                                "Describe brevemente el evento"
+                            )
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(16.dp),
+
+                        minLines = 3
+                    )
+                }
+
+
+                item {
+
+                    OutlinedTextField(
+
+                        value = fecha,
+
+                        onValueChange = {
+                            fecha = it
+                        },
+
+                        label = {
+                            Text("Fecha")
+                        },
+
+                        placeholder = {
+                            Text("Ejemplo: 30/08/2026")
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(16.dp),
+
+                        singleLine = true
+                    )
+                }
+
+
+                item {
+
+                    OutlinedTextField(
+
+                        value = lugar,
+
+                        onValueChange = {
+                            lugar = it
+                        },
+
+                        label = {
+                            Text("Lugar")
+                        },
+
+                        placeholder = {
+                            Text(
+                                "Ejemplo: Parque central"
+                            )
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(16.dp),
+
+                        singleLine = true
+                    )
+                }
+
+
+                item {
+
+                    OutlinedTextField(
+
+                        value = categoria,
+
+                        onValueChange = {
+                            categoria = it
+                        },
+
+                        label = {
+                            Text("Categoría")
+                        },
+
+                        placeholder = {
+                            Text(
+                                "Ejemplo: Evento comunitario"
+                            )
+                        },
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(16.dp),
+
+                        singleLine = true
+                    )
+                }
+
+
+                item {
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(8.dp)
+                    )
+
+
+                    // =================================================
+                    // GUARDAR
+                    // =================================================
+
+                    Button(
+
+                        onClick = {
+
+                            if (
+                                titulo.isBlank() ||
+                                descripcion.isBlank() ||
+                                fecha.isBlank() ||
+                                lugar.isBlank() ||
+                                categoria.isBlank()
+                            ) {
+
+                                Toast.makeText(
+                                    context,
+                                    "Completa todos los campos",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                return@Button
+                            }
+
+
+                            guardando = true
+
+
+                            val referencia =
+                                FirebaseDatabase
+                                    .getInstance()
+                                    .getReference("eventos")
+                                    .push()
+
+
+                            val evento = mapOf(
+
+                                "titulo" to titulo,
+
+                                "descripcion" to descripcion,
+
+                                "fecha" to fecha,
+
+                                "lugar" to lugar,
+
+                                "categoria" to categoria
+                            )
+
+
+                            referencia
+                                .setValue(evento)
+
+                                .addOnSuccessListener {
+
+                                    guardando = false
+
+                                    Toast.makeText(
+                                        context,
+                                        "Evento registrado correctamente",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                                    onRegresar()
+                                }
+
+                                .addOnFailureListener {
+
+                                    guardando = false
+
+                                    Toast.makeText(
+                                        context,
+                                        "Error al registrar el evento",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        },
+
+                        enabled = !guardando,
+
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(58.dp),
+
+                        shape =
+                            RoundedCornerShape(18.dp),
+
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor =
+                                    RosaPrincipal,
+                                contentColor =
+                                    TextoPrincipal
+                            )
+                    ) {
+
+                        if (guardando) {
+
+                            CircularProgressIndicator(
+                                color =
+                                    TextoPrincipal
+                            )
+
+                        } else {
+
+                            Text(
+                                text =
+                                    "💾  Guardar evento",
+
+                                fontSize =
+                                    17.sp,
+
+                                fontWeight =
+                                    FontWeight.Bold
+                            )
+                        }
+                    }
+
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(20.dp)
+                    )
                 }
             }
         }
